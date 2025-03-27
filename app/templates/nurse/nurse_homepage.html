@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <title>Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_homepage.css') }}">
+</head>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div id="flash-messages">
+  {% for category, message in messages %}
+  <div class="flash-message {{ category }}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo_item">
+      <i class="bx bx-menu" id="sidebarOpen"></i>
+      <p>{{ session.get('hospital_name') }}</p>
+    </div>
+    <div class="navbar_content" style="position: relative;">
+      <!-- Bell icon modified with an ID for notifications -->
+      <i class="bx bx-bell" id="Notifications"></i>
+      {% if notification_count > 0 %}
+      <span class="notification-dot"></span>
+      {% else %}
+      <span class="notification-dot" style="display:none;"></span>
+      {% endif %}
+      <img src="https://media.istockphoto.com/id/1524913019/vector/hospital-building-vector-illustration-in-flat-style-design.jpg?s=612x612&w=0&k=20&c=WVl257GwZBvckU_e5SNu0CCG3gL9EbCMZPwINLcxdj4=" alt="" class="profile" />
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="menu_content">
+      <ul class="menu_items">
+        <li class="item">
+          <a href="#" class="nav_link" onclick="loadContent('dashboard')">
+            <span class="navlink_icon"><i class="bx bx-home-alt"></i></span>
+            <span class="navlink">Dashboard</span>
+          </a>
+        </li>
+
+        <!-- Shift Swap -->
+        <li class="item">
+          <a href="#" class="nav_link" onclick="loadContent('ShiftSwap')">
+            <span class="navlink_icon"><i class="bx bx-user"></i></span>
+            <span class="navlink">Shift swap</span>
+          </a>
+        </li>
+
+        <!-- Notifications with Dot -->
+        <li class="item">
+          <a href="#" class="nav_link" onclick="loadContent('Notifications')">
+            <span class="navlink_icon"><i class="bx bx-calendar"></i></span>
+            <span class="navlink">Notifications</span>
+            {% if notification_count > 0 %}
+              <span class="notification-dot-sidebar"></span>
+            {% else %}
+              <span class="notification-dot-sidebar" style="display:none;"></span>
+            {% endif %}
+          </a>
+        </li>
+
+        <li class="item">
+          <a href="#" class="nav_link" onclick="loadContent('settings')">
+            <span class="navlink_icon"><i class="bx bx-cog"></i></span>
+            <span class="navlink">Setting</span>
+          </a>
+        </li>
+      </ul>
+      <li class="item logout">
+        <a href="{{ url_for('main.index') }}" class="nav_link">
+          <span class="navlink_icon"><i class="bx bx-log-out"></i></span>
+          <span class="navlink">Logout</span>
+        </a>
+      </li>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="content" id="contentArea">
+    <h1>Welcome {{ admin_name }}</h1>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    const sidebar = document.querySelector(".sidebar");
+    const sidebarOpen = document.querySelector("#sidebarOpen");
+
+    sidebarOpen.addEventListener("click", () => sidebar.classList.toggle("close"));
+
+    // Attach click event to the bell icon to load the swap requests page
+    const notificationsIcon = document.getElementById("Notifications");
+    notificationsIcon.addEventListener("click", () => {
+      const contentArea = document.getElementById("contentArea");
+      fetch('/nurse/notifications')
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to load swap requests');
+          return response.text();
+        })
+        .then(html => {
+          contentArea.innerHTML = html;
+          attachFormHandlers(); // Re-attach handlers if needed
+        })
+        .catch(error => {
+          console.error(error);
+          contentArea.innerHTML = `<p>Error loading swap requests. Please try again later.</p>`;
+        });
+    });
+
+    function loadContent(page) {
+      const contentArea = document.getElementById("contentArea");
+
+      if (page === "dashboard") {
+        fetch('/nurse/nurse_dashboard')
+          .then(response => {
+            if (!response.ok) throw new Error('Failed to load Dashboard content');
+            return response.text();
+          })
+          .then(html => {
+            contentArea.innerHTML = html;
+            attachFormHandlers();
+          })
+          .catch(error => {
+            console.error(error);
+            contentArea.innerHTML = `<p>Error loading page. Please try again later.</p>`;
+          });
+      }
+      else if (page === "ShiftSwap") {
+        fetch('/nurse/shift_swap')
+          .then(response => {
+            if (!response.ok) throw new Error('Failed to load Shift Swap content');
+            return response.text();
+          })
+          .then(html => {
+            contentArea.innerHTML = html;
+            attachFormHandlers();
+          })
+          .catch(error => {
+            console.error(error);
+            contentArea.innerHTML = `<p>Error loading page. Please try again later.</p>`;
+          });
+      }
+      else if (page === "Notifications") {
+        fetch('/nurse/notifications')
+          .then(response => {
+            if (!response.ok) throw new Error('Failed to load Notifications content');
+            return response.text();
+          })
+          .then(html => {
+            contentArea.innerHTML = html;
+            attachFormHandlers();
+          })
+          .catch(error => {
+            console.error(error);
+            contentArea.innerHTML = `<p>Error loading page. Please try again later.</p>`;
+          });
+      }
+      else if (page === "settings") {
+        fetch('/nurse/edit_nurse_info')
+          .then(response => {
+            if (!response.ok) throw new Error('Failed to load Settings content');
+            return response.text();
+          })
+          .then(html => {
+            contentArea.innerHTML = html;
+            attachFormHandlers();
+          })
+          .catch(error => {
+            console.error(error);
+            contentArea.innerHTML = `<p>Error loading page. Please try again later.</p>`;
+          });
+      }
+      else {
+        contentArea.innerHTML = `<h1>${page.charAt(0).toUpperCase() + page.slice(1)}</h1><p>This is the ${page} page.</p>`;
+      }
+    }
+
+    // Function to update the notification dot in the navbar
+    function updateNotificationDot() {
+      fetch('/nurse/notification_count')
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch notification count');
+          return response.json();
+        })
+        .then(data => {
+          const notificationDot = document.querySelector('.notification-dot');
+          if (data.notification_count > 0) {
+            notificationDot.style.display = 'block';
+          } else {
+            notificationDot.style.display = 'none';
+          }
+          const notificationDotSidebar = document.querySelector('.notification-dot-sidebar');
+          if (data.notification_count > 0) {
+            notificationDotSidebar.style.display = 'block';
+          } else {
+            notificationDotSidebar.style.display = 'none';
+          }
+        })
+        .catch(error => console.error('Error fetching notification count:', error));
+    }
+
+    function attachFormHandlers() {
+      const forms = document.querySelectorAll("form");
+      forms.forEach(form => {
+        form.addEventListener("submit", event => {
+          event.preventDefault();
+          const action = form.action;
+          const method = form.method;
+          const formData = new FormData(form);
+
+          fetch(action, {
+            method: method,
+            body: formData,
+          })
+            .then(response => {
+              if (!response.ok) throw new Error('Action failed');
+              return response.text();
+            })
+            .then(html => {
+              document.getElementById("contentArea").innerHTML = html;
+              attachFormHandlers();
+              updateNotificationDot();
+            })
+            .catch(error => console.error('Error:', error));
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => loadContent("dashboard"));
+  </script>
+
+</body>
+</html>
